@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Input from "./Input";
 import { PatientFormDataType } from "@/interfaces/patientFormData";
+import formSchema from "@/lib/validatiopn";
+import z from "zod";
 
 const PatientForm = () => {
   const [patientData, setPatientData] = useState<PatientFormDataType>({
@@ -22,6 +24,7 @@ const PatientForm = () => {
       relationship: "",
     },
   });
+  const [error, setError] = useState<Record<string, string>>({});
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -50,9 +53,17 @@ const PatientForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Patient Data Submitted:", patientData);
+    try {
+      const error = await formSchema.parseAsync(patientData);
+      console.log("Validation Passed:", error);
+    } catch (error) {
+      if(error instanceof z.ZodError) {
+        const zodError = error.flatten().fieldErrors;
+        setError(zodError as any);
+      }
+    }
   };
 
   return (
@@ -80,6 +91,9 @@ const PatientForm = () => {
                   value={patientData.firstName}
                   onChange={handleInputChange}
                 />
+                {error.firstName && (
+                  <p className="text-red-500 text-sm mt-1">{error.firstName}</p>
+                )}
               </div>
               <div>
                 <label
@@ -113,6 +127,9 @@ const PatientForm = () => {
                   value={patientData.lastName}
                   onChange={handleInputChange}
                 />
+                {error.lastName && (
+                  <p className="text-red-500 text-sm mt-1">{error.lastName}</p>
+                )}
               </div>
               <div>
                 <label
@@ -130,6 +147,9 @@ const PatientForm = () => {
                   value={patientData.dateOfBirth}
                   onChange={handleInputChange}
                 />
+                {error.dateOfBirth && (
+                  <p className="text-red-500 text-sm mt-1">{error.dateOfBirth}</p>
+                )}
               </div>
               <div>
                 <label
@@ -152,6 +172,9 @@ const PatientForm = () => {
                   <option value="female">Female</option>
                   <option value="other">Other</option>
                 </select>
+                {error.gender && (
+                  <p className="text-red-500 text-sm mt-1">{error.gender}</p>
+                )}
               </div>
               <div>
                 <label
@@ -170,6 +193,9 @@ const PatientForm = () => {
                   value={patientData.phoneNumber}
                   onChange={handleInputChange}
                 />
+                {error.phoneNumber && (
+                  <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>
+                )}
               </div>
             </div>
             <div className="space-y-6">
@@ -189,6 +215,9 @@ const PatientForm = () => {
                   value={patientData.email}
                   onChange={handleInputChange}
                 />
+                {error.email && (
+                  <p className="text-red-500 text-sm mt-1">{error.email}</p>
+                )}
               </div>
               <div>
                 <label
@@ -206,6 +235,9 @@ const PatientForm = () => {
                   value={patientData.address}
                   onChange={handleInputChange}
                 />
+                {error.address && (
+                  <p className="text-red-500 text-sm mt-1">{error.address}</p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -233,6 +265,11 @@ const PatientForm = () => {
                   <option value="german">German</option>
                   <option value="other">Other</option>
                 </select>
+                {error.preferredLanguage && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {error.preferredLanguage}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -250,6 +287,9 @@ const PatientForm = () => {
                   value={patientData.nationality}
                   onChange={handleInputChange}
                 />
+                {error.nationality && (
+                  <p className="text-red-500 text-sm mt-1">{error.nationality}</p>
+                )}
               </div>
               <div>
                 <label
