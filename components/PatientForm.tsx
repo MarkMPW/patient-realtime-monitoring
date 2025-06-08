@@ -1,6 +1,71 @@
+"use client";
+
+import { useState } from "react";
 import Input from "./Input";
+import { PatientFormDataType } from "@/interfaces/patientFormData";
+import formSchema from "@/lib/validatiopn";
+import z from "zod";
 
 const PatientForm = () => {
+  const [patientData, setPatientData] = useState<PatientFormDataType>({
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    dateOfBirth: "",
+    gender: "",
+    phoneNumber: "",
+    email: "",
+    address: "",
+    preferredLanguage: "",
+    nationality: "",
+    religion: "",
+    emergencyContact: {
+      name: "",
+      relationship: "",
+    },
+  });
+  const [error, setError] = useState<Record<string, string>>({});
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    setPatientData((prevData) => {
+      if (name.startsWith("emergencyContact.")) {
+        const contactField = name.split(".")[1];
+
+        return {
+          ...prevData,
+          emergencyContact: {
+            ...(prevData.emergencyContact ?? { name: "", relationship: "" }),
+            [contactField]: value,
+          },
+        };
+      }
+
+      return {
+        ...prevData,
+        [name]: value,
+      };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const error = await formSchema.parseAsync(patientData);
+      console.log("Validation Passed:", error);
+    } catch (error) {
+      if(error instanceof z.ZodError) {
+        const zodError = error.flatten().fieldErrors;
+        setError(zodError as any);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="container">
@@ -23,7 +88,12 @@ const PatientForm = () => {
                   name="firstName"
                   required
                   className="input-form"
+                  value={patientData.firstName}
+                  onChange={handleInputChange}
                 />
+                {error.firstName && (
+                  <p className="text-red-500 text-sm mt-1">{error.firstName}</p>
+                )}
               </div>
               <div>
                 <label
@@ -37,6 +107,8 @@ const PatientForm = () => {
                   id="middleName"
                   name="middleName"
                   className="input-form"
+                  value={patientData.middleName}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -52,7 +124,12 @@ const PatientForm = () => {
                   name="lastName"
                   required
                   className="input-form"
+                  value={patientData.lastName}
+                  onChange={handleInputChange}
                 />
+                {error.lastName && (
+                  <p className="text-red-500 text-sm mt-1">{error.lastName}</p>
+                )}
               </div>
               <div>
                 <label
@@ -67,7 +144,12 @@ const PatientForm = () => {
                   name="dateOfBirth"
                   required
                   className="input-form"
+                  value={patientData.dateOfBirth}
+                  onChange={handleInputChange}
                 />
+                {error.dateOfBirth && (
+                  <p className="text-red-500 text-sm mt-1">{error.dateOfBirth}</p>
+                )}
               </div>
               <div>
                 <label
@@ -82,16 +164,22 @@ const PatientForm = () => {
                   required
                   className="input-form"
                   style={{ padding: "10px 8px" }}
+                  value={patientData.gender}
+                  onChange={handleInputChange}
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="other">Other</option>
                 </select>
+                {error.gender && (
+                  <p className="text-red-500 text-sm mt-1">{error.gender}</p>
+                )}
               </div>
               <div>
                 <label
                   htmlFor="phoneNumber"
+
                   className="block text-sm font-medium text-gray-700"
                 >
                   Phone Number *
@@ -102,7 +190,12 @@ const PatientForm = () => {
                   name="phoneNumber"
                   required
                   className="input-form"
+                  value={patientData.phoneNumber}
+                  onChange={handleInputChange}
                 />
+                {error.phoneNumber && (
+                  <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>
+                )}
               </div>
             </div>
             <div className="space-y-6">
@@ -119,7 +212,12 @@ const PatientForm = () => {
                   name="email"
                   required
                   className="input-form"
+                  value={patientData.email}
+                  onChange={handleInputChange}
                 />
+                {error.email && (
+                  <p className="text-red-500 text-sm mt-1">{error.email}</p>
+                )}
               </div>
               <div>
                 <label
@@ -134,7 +232,12 @@ const PatientForm = () => {
                   required
                   rows={3}
                   className="input-form"
+                  value={patientData.address}
+                  onChange={handleInputChange}
                 />
+                {error.address && (
+                  <p className="text-red-500 text-sm mt-1">{error.address}</p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -151,14 +254,22 @@ const PatientForm = () => {
                   required
                   className="input-form"
                   style={{ padding: "10px 8px" }}
+                  value={patientData.preferredLanguage}
+                  onChange={handleInputChange}
                 >
                   <option value="">Select Language</option>
+                  <option value="thailand">Thailand</option>
                   <option value="english">English</option>
                   <option value="spanish">Spanish</option>
                   <option value="french">French</option>
                   <option value="german">German</option>
                   <option value="other">Other</option>
                 </select>
+                {error.preferredLanguage && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {error.preferredLanguage}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -173,7 +284,12 @@ const PatientForm = () => {
                   name="nationality"
                   required
                   className="input-form"
+                  value={patientData.nationality}
+                  onChange={handleInputChange}
                 />
+                {error.nationality && (
+                  <p className="text-red-500 text-sm mt-1">{error.nationality}</p>
+                )}
               </div>
               <div>
                 <label
@@ -187,6 +303,8 @@ const PatientForm = () => {
                   id="religion"
                   name="religion"
                   className="input-form"
+                  value={patientData.religion}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -207,6 +325,8 @@ const PatientForm = () => {
                     id="emergencyContact.name"
                     name="emergencyContact.name"
                     className="input-form"
+                    value={patientData.emergencyContact?.name}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div>
@@ -221,6 +341,8 @@ const PatientForm = () => {
                     id="emergencyContact.relationship"
                     name="emergencyContact.relationship"
                     className="input-form"
+                    value={patientData.emergencyContact?.relationship}
+                    onChange={handleInputChange}
                   />
                 </div>
               </div>
@@ -235,6 +357,7 @@ const PatientForm = () => {
               <button
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer"
+                onClick={handleSubmit}
               >
                 Submit
               </button>
