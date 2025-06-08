@@ -24,6 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+        <script src="https://cdn.ably.com/lib/objects.umd.min-2.js"></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

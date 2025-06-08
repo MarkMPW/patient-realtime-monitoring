@@ -1,118 +1,175 @@
-import React from "react";
+"use client";
 
-const StaffForm = () => {
+import { useState, useEffect } from "react";
+import { PatientFormDataType } from "@/interfaces/patientFormData";
+import { useAbly } from "@/hooks/useAbly";
 
-  // mock emergncy contact data
-  let patientData = {
-    emergencyContact: {
-      name: "John Doe",
-      relationship: "Brother",
+const StaffView = () => {
+  const [patientData, setPatientData] = useState<PatientFormDataType | null>(null);
+  const { channel, isConnected } = useAbly("patient-form");
+  const [activityStatus, setActivityStatus] = useState<'inactive' | 'active' | 'submitted'>('inactive');
+  const [notification, setNotification] = useState<{
+    type: 'success';
+    message: string;
+    patientName: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!channel) return;
+
+    // Subscribe to patient updates
+    channel.subscribe("patient-update", (message: any) => {
+      console.log("Received patient update:", message.data);
+      setPatientData(message.data);
+    });
+
+    // Subscribe to form submissions
+    channel.subscribe("patient-submit", (message: any) => {
+      console.log("Received final form submission:", message.data);
+      setPatientData(message.data);
+      setNotification({
+        type: 'success',
+        message: `New patient form submitted at ${new Date(message.data.submittedAt).toLocaleTimeString()}`,
+        patientName: `${message.data.firstName} ${message.data.lastName}`
+      });
+
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    });
+
+    // Subscribe to activity status updates
+    channel.subscribe("activity-status", (message: any) => {
+      setActivityStatus(message.data.status);
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [channel]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-500';
+      case 'inactive':
+        return 'bg-gray-500';
+      case 'submitted':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
     }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Patient is filling the form';
+      case 'inactive':
+        return 'Patient is inactive';
+      case 'submitted':
+        return 'Form submitted';
+      default:
+        return 'Unknown status';
+    }
+  };
+
+  const renderField = (label: string, value: string | undefined) => (
+    <div>
+      <p className="staff-title-field">{label}</p>
+      <p className="staff-paatient-info">{value ?? "—"}</p>
+    </div>
+  );
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="container">
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <span className="text-gray-500">Connecting to real-time updates...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="container">
         <div className="bg-white shadow-lg rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
               Staff View (LiveObject)
             </h2>
+            <div className="flex items-center space-x-4">
+              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-500">
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
           </div>
+
+          <div className="mb-6">
+            <div className="flex items-center space-x-2">
+              <div className={`h-3 w-3 rounded-full ${getStatusColor(activityStatus)}`} />
+              <span className="text-sm font-medium text-gray-700">
+                {getStatusText(activityStatus)}
+              </span>
+            </div>
+          </div>
+
+          {notification && (
+            <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
+              <div className="font-semibold">{notification.message}</div>
+              <div className="text-sm mt-1">Patient: {notification.patientName}</div>
+            </div>
+          )}
+
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="staff-title-field">
-                    First Name
-                  </p>
-                  <p className="staff-paatient-info">Patient Firstname</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Middle Name
-                  </p>
-                  <p className="staff-paatient-info">Middle name</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Last Name</p>
-                  <p className="staff-paatient-info">Patient Lastname</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Date of Birth
-                  </p>
-                  <p className="staff-paatient-info">Patient Date of Birth</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Gender</p>
-                  <p className="staff-paatient-info">Patient Gender</p>
-                </div>
+                {renderField("First Name", patientData?.firstName)}
+                {renderField("Middle Name", patientData?.middleName)}
+                {renderField("Last Name", patientData?.lastName)}
+                {renderField("Date of Birth", patientData?.dateOfBirth)}
+                {renderField("Gender", patientData?.gender)}
               </div>
             </div>
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Contact Information
               </h3>
               <div className="space-y-4">
-                <div>
-                  <p className="staff-title-field">
-                    Phone Number
-                  </p>
-                  <p className="staff-paatient-info">Patient Phone Number</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Email Address
-                  </p>
-                  <p className="staff-paatient-info">Patient Email Address</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Address</p>
-                  <p className="staff-paatient-info">Patient Address</p>
-                </div>
+                {renderField("Phone Number", patientData?.phoneNumber)}
+                {renderField("Email Address", patientData?.email)}
+                {renderField("Address", patientData?.address)}
               </div>
             </div>
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Additional Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="staff-title-field">
-                    Preferred Language
-                  </p>
-                  <p className="staff-paatient-info">
-                    Patient Preferred Language
-                  </p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Nationality
-                  </p>
-                  <p className="staff-paatient-info">Patient Nationality</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Religion</p>
-                  <p className="staff-paatient-info">Patient Religion</p>
-                </div>
+                {renderField("Preferred Language", patientData?.preferredLanguage)}
+                {renderField("Nationality", patientData?.nationality)}
+                {renderField("Religion", patientData?.religion)}
               </div>
             </div>
-            {patientData.emergencyContact && (
+            {(patientData?.emergencyContact?.name || patientData?.emergencyContact?.relationship) && (
               <div>
-                <h3 className="staff-h3">Emergency Contact</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Emergency Contact
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="staff-title-field">Name</p>
-                    <p className="staff-paatient-info">{patientData.emergencyContact.name}</p>
-                  </div>
-                  <div>
-                    <p className="staff-title-field">Relationship</p>
-                    <p className="staff-paatient-info">{patientData.emergencyContact.relationship}</p>
-                  </div>
+                  {renderField("Name", patientData?.emergencyContact?.name)}
+                  {renderField("Relationship", patientData?.emergencyContact?.relationship)}
                 </div>
               </div>
             )}
@@ -123,4 +180,4 @@ const StaffForm = () => {
   );
 };
 
-export default StaffForm;
+export default StaffView;
