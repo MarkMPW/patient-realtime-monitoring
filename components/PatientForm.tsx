@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "./Input";
 import { PatientFormDataType } from "@/interfaces/patientFormData";
 import formSchema from "@/lib/validatiopn";
 import z from "zod";
+import * as Ably from "ably";
 
 const PatientForm = () => {
   const [patientData, setPatientData] = useState<PatientFormDataType>({
@@ -25,6 +26,38 @@ const PatientForm = () => {
     },
   });
   const [error, setError] = useState<Record<string, string>>({});
+  const [ablyClient, setAblyClient] = useState<Ably.Realtime | null>(null);
+
+  useEffect(() => {
+    const realtimeClient = new Ably.Realtime({
+      authUrl: "/api/ably-token",
+    });
+
+    const channel = realtimeClient.channels.get("patient-form", {
+      modes: ["OBJECT_SUBSCRIBE", "OBJECT_PUBLISH"],
+    });
+
+    console.log('channel: ', channel)
+
+    const connection = async () => {
+      await channel.attach();
+    }
+
+    connection()
+
+    realtimeClient.connection.on("connected", () => {
+      console.log("Connected to Ably");
+      setAblyClient(realtimeClient);
+    });
+
+    realtimeClient.connection.on("failed", (error) => {
+      console.error("Failed to connect to Ably:", error);
+    });
+
+    return () => {
+      realtimeClient.close();
+    };
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -56,10 +89,10 @@ const PatientForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const error = await formSchema.parseAsync(patientData);
-      console.log("Validation Passed:", error);
+      const validatedData = await formSchema.parseAsync(patientData);
+      console.log("Validation Passed:", validatedData);
     } catch (error) {
-      if(error instanceof z.ZodError) {
+      if (error instanceof z.ZodError) {
         const zodError = error.flatten().fieldErrors;
         setError(zodError as any);
       }
@@ -148,7 +181,9 @@ const PatientForm = () => {
                   onChange={handleInputChange}
                 />
                 {error.dateOfBirth && (
-                  <p className="text-red-500 text-sm mt-1">{error.dateOfBirth}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {error.dateOfBirth}
+                  </p>
                 )}
               </div>
               <div>
@@ -179,7 +214,6 @@ const PatientForm = () => {
               <div>
                 <label
                   htmlFor="phoneNumber"
-
                   className="block text-sm font-medium text-gray-700"
                 >
                   Phone Number *
@@ -194,7 +228,9 @@ const PatientForm = () => {
                   onChange={handleInputChange}
                 />
                 {error.phoneNumber && (
-                  <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {error.phoneNumber}
+                  </p>
                 )}
               </div>
             </div>
@@ -288,7 +324,9 @@ const PatientForm = () => {
                   onChange={handleInputChange}
                 />
                 {error.nationality && (
-                  <p className="text-red-500 text-sm mt-1">{error.nationality}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {error.nationality}
+                  </p>
                 )}
               </div>
               <div>

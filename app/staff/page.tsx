@@ -1,12 +1,9 @@
 import StaffView from '@/components/StaffView'
-import React from 'react'
 
-const StaffPage = () => {
+export default function StaffPage() {
   return (
     <section>
       <StaffView />
     </section>
   )
 }
-
-export default StaffPage
