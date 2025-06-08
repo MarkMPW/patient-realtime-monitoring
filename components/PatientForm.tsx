@@ -1,6 +1,60 @@
+"use client";
+
+import { useState } from "react";
 import Input from "./Input";
+import { PatientFormDataType } from "@/interfaces/patientFormData";
 
 const PatientForm = () => {
+  const [patientData, setPatientData] = useState<PatientFormDataType>({
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    dateOfBirth: "",
+    gender: "",
+    phoneNumber: "",
+    email: "",
+    address: "",
+    preferredLanguage: "",
+    nationality: "",
+    religion: "",
+    emergencyContact: {
+      name: "",
+      relationship: "",
+    },
+  });
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    setPatientData((prevData) => {
+      if (name.startsWith("emergencyContact.")) {
+        const contactField = name.split(".")[1];
+
+        return {
+          ...prevData,
+          emergencyContact: {
+            ...(prevData.emergencyContact ?? { name: "", relationship: "" }),
+            [contactField]: value,
+          },
+        };
+      }
+
+      return {
+        ...prevData,
+        [name]: value,
+      };
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Patient Data Submitted:", patientData);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="container">
@@ -23,6 +77,8 @@ const PatientForm = () => {
                   name="firstName"
                   required
                   className="input-form"
+                  value={patientData.firstName}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -37,6 +93,8 @@ const PatientForm = () => {
                   id="middleName"
                   name="middleName"
                   className="input-form"
+                  value={patientData.middleName}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -52,6 +110,8 @@ const PatientForm = () => {
                   name="lastName"
                   required
                   className="input-form"
+                  value={patientData.lastName}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -67,6 +127,8 @@ const PatientForm = () => {
                   name="dateOfBirth"
                   required
                   className="input-form"
+                  value={patientData.dateOfBirth}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -82,6 +144,8 @@ const PatientForm = () => {
                   required
                   className="input-form"
                   style={{ padding: "10px 8px" }}
+                  value={patientData.gender}
+                  onChange={handleInputChange}
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
@@ -92,6 +156,7 @@ const PatientForm = () => {
               <div>
                 <label
                   htmlFor="phoneNumber"
+                  
                   className="block text-sm font-medium text-gray-700"
                 >
                   Phone Number *
@@ -102,6 +167,8 @@ const PatientForm = () => {
                   name="phoneNumber"
                   required
                   className="input-form"
+                  value={patientData.phoneNumber}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -119,6 +186,8 @@ const PatientForm = () => {
                   name="email"
                   required
                   className="input-form"
+                  value={patientData.email}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -134,6 +203,8 @@ const PatientForm = () => {
                   required
                   rows={3}
                   className="input-form"
+                  value={patientData.address}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -151,6 +222,8 @@ const PatientForm = () => {
                   required
                   className="input-form"
                   style={{ padding: "10px 8px" }}
+                  value={patientData.preferredLanguage}
+                  onChange={handleInputChange}
                 >
                   <option value="">Select Language</option>
                   <option value="english">English</option>
@@ -173,6 +246,8 @@ const PatientForm = () => {
                   name="nationality"
                   required
                   className="input-form"
+                  value={patientData.nationality}
+                  onChange={handleInputChange}
                 />
               </div>
               <div>
@@ -187,6 +262,8 @@ const PatientForm = () => {
                   id="religion"
                   name="religion"
                   className="input-form"
+                  value={patientData.religion}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -207,6 +284,8 @@ const PatientForm = () => {
                     id="emergencyContact.name"
                     name="emergencyContact.name"
                     className="input-form"
+                    value={patientData.emergencyContact?.name}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div>
@@ -221,6 +300,8 @@ const PatientForm = () => {
                     id="emergencyContact.relationship"
                     name="emergencyContact.relationship"
                     className="input-form"
+                    value={patientData.emergencyContact?.relationship}
+                    onChange={handleInputChange}
                   />
                 </div>
               </div>
@@ -235,6 +316,7 @@ const PatientForm = () => {
               <button
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer"
+                onClick={handleSubmit}
               >
                 Submit
               </button>
