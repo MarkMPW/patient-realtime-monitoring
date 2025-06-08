@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Input from "./Input";
 import { PatientFormDataType } from "@/interfaces/patientFormData";
 import formSchema from "@/lib/validatiopn";
 import z from "zod";
-import * as Ably from "ably";
+import { useAbly } from "@/hooks/useAbly";
 
 const PatientForm = () => {
   const [patientData, setPatientData] = useState<PatientFormDataType>({
@@ -26,38 +26,7 @@ const PatientForm = () => {
     },
   });
   const [error, setError] = useState<Record<string, string>>({});
-  const [ablyClient, setAblyClient] = useState<Ably.Realtime | null>(null);
-
-  useEffect(() => {
-    const realtimeClient = new Ably.Realtime({
-      authUrl: "/api/ably-token",
-    });
-
-    const channel = realtimeClient.channels.get("patient-form", {
-      modes: ["OBJECT_SUBSCRIBE", "OBJECT_PUBLISH"],
-    });
-
-    console.log('channel: ', channel)
-
-    const connection = async () => {
-      await channel.attach();
-    }
-
-    connection()
-
-    realtimeClient.connection.on("connected", () => {
-      console.log("Connected to Ably");
-      setAblyClient(realtimeClient);
-    });
-
-    realtimeClient.connection.on("failed", (error) => {
-      console.error("Failed to connect to Ably:", error);
-    });
-
-    return () => {
-      realtimeClient.close();
-    };
-  }, []);
+  const { channel, isConnected } = useAbly("patient-form");
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -67,22 +36,24 @@ const PatientForm = () => {
     const { name, value } = e.target;
 
     setPatientData((prevData) => {
-      if (name.startsWith("emergencyContact.")) {
-        const contactField = name.split(".")[1];
+      const newData = name.startsWith("emergencyContact.")
+        ? {
+            ...prevData,
+            emergencyContact: {
+              ...(prevData.emergencyContact ?? { name: "", relationship: "" }),
+              [name.split(".")[1]]: value,
+            },
+          }
+        : {
+            ...prevData,
+            [name]: value,
+          };
 
-        return {
-          ...prevData,
-          emergencyContact: {
-            ...(prevData.emergencyContact ?? { name: "", relationship: "" }),
-            [contactField]: value,
-          },
-        };
+      if (channel) {
+        channel.publish("patient-update", newData);
       }
 
-      return {
-        ...prevData,
-        [name]: value,
-      };
+      return newData;
     });
   };
 
@@ -91,6 +62,11 @@ const PatientForm = () => {
     try {
       const validatedData = await formSchema.parseAsync(patientData);
       console.log("Validation Passed:", validatedData);
+      
+      if (channel) {
+        channel.publish("patient-submit", validatedData);
+        console.log("Published final form:", validatedData);
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const zodError = error.flatten().fieldErrors;
@@ -103,9 +79,17 @@ const PatientForm = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="container">
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Patient Form (LiveObject)
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Patient Form (LiveObject)
+            </h2>
+            <div className="flex items-center space-x-4">
+              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-500">
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+          </div>
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

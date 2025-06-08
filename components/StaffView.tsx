@@ -1,14 +1,39 @@
-import React from "react";
+"use client";
 
-const StaffForm = () => {
+import { useState, useEffect } from "react";
+import { PatientFormDataType } from "@/interfaces/patientFormData";
+import { useAbly } from "@/hooks/useAbly";
 
-  // mock emergncy contact data
-  let patientData = {
-    emergencyContact: {
-      name: "John Doe",
-      relationship: "Brother",
-    }
-  }
+const StaffView = () => {
+  const [patientData, setPatientData] = useState<PatientFormDataType | null>(null);
+  const { channel, isConnected } = useAbly("patient-form");
+
+  useEffect(() => {
+    if (!channel) return;
+
+    // Subscribe to patient updates
+    channel.subscribe("patient-update", (message: any) => {
+      console.log("Received patient update:", message.data);
+      setPatientData(message.data);
+    });
+
+    // Subscribe to form submissions
+    channel.subscribe("patient-submit", (message: any) => {
+      console.log("Received final form submission:", message.data);
+      setPatientData(message.data);
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [channel]);
+
+  const renderField = (label: string, value: string | undefined) => (
+    <div>
+      <p className="staff-title-field">{label}</p>
+      <p className="staff-paatient-info">{value ?? "—"}</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -18,101 +43,54 @@ const StaffForm = () => {
             <h2 className="text-2xl font-bold text-gray-900">
               Staff View (LiveObject)
             </h2>
+            <div className="flex items-center space-x-4">
+              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-500">
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
           </div>
           <div className="space-y-6">
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="staff-title-field">
-                    First Name
-                  </p>
-                  <p className="staff-paatient-info">Patient Firstname</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Middle Name
-                  </p>
-                  <p className="staff-paatient-info">Middle name</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Last Name</p>
-                  <p className="staff-paatient-info">Patient Lastname</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Date of Birth
-                  </p>
-                  <p className="staff-paatient-info">Patient Date of Birth</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Gender</p>
-                  <p className="staff-paatient-info">Patient Gender</p>
-                </div>
+                {renderField("First Name", patientData?.firstName)}
+                {renderField("Middle Name", patientData?.middleName)}
+                {renderField("Last Name", patientData?.lastName)}
+                {renderField("Date of Birth", patientData?.dateOfBirth)}
+                {renderField("Gender", patientData?.gender)}
               </div>
             </div>
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Contact Information
               </h3>
               <div className="space-y-4">
-                <div>
-                  <p className="staff-title-field">
-                    Phone Number
-                  </p>
-                  <p className="staff-paatient-info">Patient Phone Number</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Email Address
-                  </p>
-                  <p className="staff-paatient-info">Patient Email Address</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Address</p>
-                  <p className="staff-paatient-info">Patient Address</p>
-                </div>
+                {renderField("Phone Number", patientData?.phoneNumber)}
+                {renderField("Email Address", patientData?.email)}
+                {renderField("Address", patientData?.address)}
               </div>
             </div>
             <div className="border-b pb-6">
-              <h3 className="staff-h3">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Additional Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="staff-title-field">
-                    Preferred Language
-                  </p>
-                  <p className="staff-paatient-info">
-                    Patient Preferred Language
-                  </p>
-                </div>
-                <div>
-                  <p className="staff-title-field">
-                    Nationality
-                  </p>
-                  <p className="staff-paatient-info">Patient Nationality</p>
-                </div>
-                <div>
-                  <p className="staff-title-field">Religion</p>
-                  <p className="staff-paatient-info">Patient Religion</p>
-                </div>
+                {renderField("Preferred Language", patientData?.preferredLanguage)}
+                {renderField("Nationality", patientData?.nationality)}
+                {renderField("Religion", patientData?.religion)}
               </div>
             </div>
-            {patientData.emergencyContact && (
+            {(patientData?.emergencyContact?.name || patientData?.emergencyContact?.relationship) && (
               <div>
-                <h3 className="staff-h3">Emergency Contact</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Emergency Contact
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="staff-title-field">Name</p>
-                    <p className="staff-paatient-info">{patientData.emergencyContact.name}</p>
-                  </div>
-                  <div>
-                    <p className="staff-title-field">Relationship</p>
-                    <p className="staff-paatient-info">{patientData.emergencyContact.relationship}</p>
-                  </div>
+                  {renderField("Name", patientData?.emergencyContact?.name)}
+                  {renderField("Relationship", patientData?.emergencyContact?.relationship)}
                 </div>
               </div>
             )}
@@ -123,4 +101,4 @@ const StaffForm = () => {
   );
 };
 
-export default StaffForm;
+export default StaffView;
