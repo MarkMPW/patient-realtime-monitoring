@@ -2,7 +2,7 @@ import { InputPropType } from "@/interfaces/InputPropType";
 import React from "react";
 
 const Input = (props: InputPropType) => {
-  const { type, id, name, required = false, className } = props;
+  const { type, id, name, required = false, className, value, onChange} = props;
   return (
     <input
       type={type}
@@ -10,6 +10,8 @@ const Input = (props: InputPropType) => {
       name={name}
       required={required}
       className={className}
+      value={value}
+      onChange={onChange}
     />
   );
 };
