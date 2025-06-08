@@ -1,3 +1,5 @@
+import Input from "./Input";
+
 const PatientForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -15,7 +17,7 @@ const PatientForm = () => {
                 >
                   First Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="firstName"
                   name="firstName"
@@ -30,7 +32,7 @@ const PatientForm = () => {
                 >
                   Middle Name
                 </label>
-                <input
+                <Input
                   type="text"
                   id="middleName"
                   name="middleName"
@@ -44,7 +46,7 @@ const PatientForm = () => {
                 >
                   Last Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="lastName"
                   name="lastName"
@@ -59,7 +61,7 @@ const PatientForm = () => {
                 >
                   Date of Birth *
                 </label>
-                <input
+                <Input
                   type="date"
                   id="dateOfBirth"
                   name="dateOfBirth"
@@ -79,7 +81,7 @@ const PatientForm = () => {
                   name="gender"
                   required
                   className="input-form"
-                  style={{ padding: '10px 8px' }}
+                  style={{ padding: "10px 8px" }}
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
@@ -94,7 +96,7 @@ const PatientForm = () => {
                 >
                   Phone Number *
                 </label>
-                <input
+                <Input
                   type="tel"
                   id="phoneNumber"
                   name="phoneNumber"
@@ -111,7 +113,7 @@ const PatientForm = () => {
                 >
                   Email Address *
                 </label>
-                <input
+                <Input
                   type="email"
                   id="email"
                   name="email"
@@ -148,7 +150,7 @@ const PatientForm = () => {
                   name="preferredLanguage"
                   required
                   className="input-form"
-                  style={{ padding: '10px 8px' }}
+                  style={{ padding: "10px 8px" }}
                 >
                   <option value="">Select Language</option>
                   <option value="english">English</option>
@@ -165,7 +167,7 @@ const PatientForm = () => {
                 >
                   Nationality *
                 </label>
-                <input
+                <Input
                   type="text"
                   id="nationality"
                   name="nationality"
@@ -180,7 +182,7 @@ const PatientForm = () => {
                 >
                   Religion
                 </label>
-                <input
+                <Input
                   type="text"
                   id="religion"
                   name="religion"
@@ -200,7 +202,7 @@ const PatientForm = () => {
                   >
                     Emergency Contact Name
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="emergencyContact.name"
                     name="emergencyContact.name"
@@ -214,7 +216,7 @@ const PatientForm = () => {
                   >
                     Relationship
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="emergencyContact.relationship"
                     name="emergencyContact.relationship"
@@ -224,10 +226,16 @@ const PatientForm = () => {
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-              <button type="button" className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 cursor-pointer">
+              <button
+                type="button"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 cursor-pointer"
+              >
                 Cancel
               </button>
-              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer">
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer"
+              >
                 Submit
               </button>
             </div>
