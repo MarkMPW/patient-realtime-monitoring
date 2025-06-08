@@ -156,7 +156,7 @@ const PatientForm = () => {
               <div>
                 <label
                   htmlFor="phoneNumber"
-                  
+
                   className="block text-sm font-medium text-gray-700"
                 >
                   Phone Number *
@@ -226,6 +226,7 @@ const PatientForm = () => {
                   onChange={handleInputChange}
                 >
                   <option value="">Select Language</option>
+                  <option value="thailand">Thailand</option>
                   <option value="english">English</option>
                   <option value="spanish">Spanish</option>
                   <option value="french">French</option>
