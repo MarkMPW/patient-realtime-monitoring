@@ -18,7 +18,7 @@ export const useAbly = (channelName: string) => {
     };
 
     connection();
-
+    
     realtimeClient.connection.on("connected", () => {
       console.log(`Connected to Ably channel: ${channelName}`);
       setIsConnected(true);

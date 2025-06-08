@@ -1,32 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "./Input";
 import { PatientFormDataType } from "@/interfaces/patientFormData";
 import formSchema from "@/lib/validatiopn";
 import z from "zod";
 import { useAbly } from "@/hooks/useAbly";
 
+const initialFormData: PatientFormDataType = {
+  firstName: "",
+  middleName: "",
+  lastName: "",
+  dateOfBirth: "",
+  gender: "",
+  phoneNumber: "",
+  email: "",
+  address: "",
+  preferredLanguage: "",
+  nationality: "",
+  religion: "",
+  emergencyContact: {
+    name: "",
+    relationship: "",
+  },
+};
+
 const PatientForm = () => {
-  const [patientData, setPatientData] = useState<PatientFormDataType>({
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    dateOfBirth: "",
-    gender: "",
-    phoneNumber: "",
-    email: "",
-    address: "",
-    preferredLanguage: "",
-    nationality: "",
-    religion: "",
-    emergencyContact: {
-      name: "",
-      relationship: "",
-    },
-  });
+  const [patientData, setPatientData] = useState<PatientFormDataType>(initialFormData);
   const [error, setError] = useState<Record<string, string>>({});
   const { channel, isConnected } = useAbly("patient-form");
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  // Update activity status every 30 seconds
+  useEffect(() => {
+    if (!channel) return;
+
+    const activityInterval = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastActivity;
+      
+      // If no activity for more than 2 minutes, mark as inactive
+      if (timeSinceLastActivity > 120000) {
+        channel.publish("activity-status", { status: "inactive" });
+      } else {
+        channel.publish("activity-status", { status: "active" });
+      }
+    }, 30000);
+
+    return () => clearInterval(activityInterval);
+  }, [channel, lastActivity]);
+
+  const resetForm = () => {
+    setPatientData(initialFormData);
+    setError({});
+    setSubmitStatus('idle');
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -34,6 +63,7 @@ const PatientForm = () => {
     >
   ) => {
     const { name, value } = e.target;
+    setLastActivity(Date.now());
 
     setPatientData((prevData) => {
       const newData = name.startsWith("emergencyContact.")
@@ -51,6 +81,7 @@ const PatientForm = () => {
 
       if (channel) {
         channel.publish("patient-update", newData);
+        channel.publish("activity-status", { status: "active" });
       }
 
       return newData;
@@ -59,18 +90,32 @@ const PatientForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitStatus('submitting');
+    setError({}); // Clear any previous errors
+
     try {
       const validatedData = await formSchema.parseAsync(patientData);
       console.log("Validation Passed:", validatedData);
       
       if (channel) {
-        channel.publish("patient-submit", validatedData);
+        channel.publish("patient-submit", {
+          ...validatedData,
+          submittedAt: new Date().toISOString(),
+        });
+        channel.publish("activity-status", { status: "submitted" });
         console.log("Published final form:", validatedData);
+        setSubmitStatus('success');
+        
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          resetForm();
+        }, 3000);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const zodError = error.flatten().fieldErrors;
         setError(zodError as any);
+        setSubmitStatus('error');
       }
     }
   };
@@ -81,16 +126,33 @@ const PatientForm = () => {
         <div className="bg-white shadow-lg rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              Patient Form (LiveObject)
+              Patient Form
             </h2>
             <div className="flex items-center space-x-4">
-              <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div
+                className={`h-3 w-3 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
               <span className="text-sm text-gray-500">
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
           </div>
-          <form className="space-y-6">
+
+          {submitStatus === 'success' && (
+            <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
+              Form submitted successfully! Staff has been notified.
+            </div>
+          )}
+
+          {submitStatus === 'error' && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+              Please fill in all required fields correctly.
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label

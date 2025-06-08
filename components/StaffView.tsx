@@ -7,6 +7,12 @@ import { useAbly } from "@/hooks/useAbly";
 const StaffView = () => {
   const [patientData, setPatientData] = useState<PatientFormDataType | null>(null);
   const { channel, isConnected } = useAbly("patient-form");
+  const [activityStatus, setActivityStatus] = useState<'inactive' | 'active' | 'submitted'>('inactive');
+  const [notification, setNotification] = useState<{
+    type: 'success';
+    message: string;
+    patientName: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!channel) return;
@@ -21,12 +27,53 @@ const StaffView = () => {
     channel.subscribe("patient-submit", (message: any) => {
       console.log("Received final form submission:", message.data);
       setPatientData(message.data);
+      setNotification({
+        type: 'success',
+        message: `New patient form submitted at ${new Date(message.data.submittedAt).toLocaleTimeString()}`,
+        patientName: `${message.data.firstName} ${message.data.lastName}`
+      });
+
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    });
+
+    // Subscribe to activity status updates
+    channel.subscribe("activity-status", (message: any) => {
+      setActivityStatus(message.data.status);
     });
 
     return () => {
       channel.unsubscribe();
     };
   }, [channel]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-500';
+      case 'inactive':
+        return 'bg-gray-500';
+      case 'submitted':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Patient is filling the form';
+      case 'inactive':
+        return 'Patient is inactive';
+      case 'submitted':
+        return 'Form submitted';
+      default:
+        return 'Unknown status';
+    }
+  };
 
   const renderField = (label: string, value: string | undefined) => (
     <div>
@@ -35,9 +82,24 @@ const StaffView = () => {
     </div>
   );
 
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="container">
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <span className="text-gray-500">Connecting to real-time updates...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="container">
         <div className="bg-white shadow-lg rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -50,6 +112,23 @@ const StaffView = () => {
               </span>
             </div>
           </div>
+
+          <div className="mb-6">
+            <div className="flex items-center space-x-2">
+              <div className={`h-3 w-3 rounded-full ${getStatusColor(activityStatus)}`} />
+              <span className="text-sm font-medium text-gray-700">
+                {getStatusText(activityStatus)}
+              </span>
+            </div>
+          </div>
+
+          {notification && (
+            <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
+              <div className="font-semibold">{notification.message}</div>
+              <div className="text-sm mt-1">Patient: {notification.patientName}</div>
+            </div>
+          )}
+
           <div className="space-y-6">
             <div className="border-b pb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
