@@ -11,6 +11,14 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    plugins: {
+      "@next/next": require("@next/eslint-plugin-next"),
+    },
+    rules: {
+      "@next/next/no-sync-scripts": "off",
+    }
+  }
 ];
 
 export default eslintConfig;
