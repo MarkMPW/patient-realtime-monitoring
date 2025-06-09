@@ -119,3 +119,26 @@ patient-realtime-monitoring/
   - Patient activity status
   - Form submission notifications
 
+## Design
+
+### Patient view
+
+#### Desktop (Patient)
+![Patient Desktop](public/patient-desktop-screen.png)
+
+#### Mobile (Patient)
+![Patient Mobile](public/patient-mobile-screen.png)
+
+### Staff View
+
+#### Desktop (Staff)
+![Staff Desktop](public/staff-desktop-screen.png)
+
+#### Desktop (Staff)
+![Staff Desktop](public/staff-mobile-screen.png)
+
+
+
+
+
+
