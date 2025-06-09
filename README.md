@@ -33,3 +33,89 @@ Before connect to Ably you need to create Api key first [Learn more](https://abl
 ```
 ABLY_API_KEY=
 ```
+
+## Project Structure
+
+```
+patient-realtime-monitoring/
+├── app/ # Next.js app directory
+│ ├── api/ # API routes
+| |  | └── ably-token/ # Ably authentication endpoint
+| |  | | └── route.ts # Ably token generation
+│ ├── staff/ # Staff-related page
+│ ├── layout.tsx # Root layout component
+│ ├── page.tsx # Patient page
+│ └── globals.css # Global styles
+│
+├── components/ # Reusable React components
+│ ├── PatientForm.tsx # Patient form component
+│ ├── StaffView.tsx # Staff view component
+│ └── Input.tsx # Reusable input component
+│
+├── hooks/ # Custom React hooks
+│ └── useAbly.tsx # Ably real-time communication hook
+│
+├── interfaces/ # TypeScript interfaces/types
+│
+├── lib/ # Utility functions and configurations
+│
+├── public/ # Static assets
+│
+└── [Configuration Files]
+├── package.json # Project dependencies
+├── tsconfig.json # TypeScript configuration
+├── next.config.ts # Next.js configuration
+└── eslint.config.mjs # ESLint configuration
+```
+
+## Main Components
+- **PatientForm.tsx**  
+  - Maintains a responsive grid layout  
+  - Collects patient information  
+  - Sends real-time updates as the form is filled  
+  - Tracks patient activity status (active/inactive)
+
+- **StaffView.tsx**  
+  - Displays patient data in real-time  
+  - Highlights patient activity status  
+  - Provides an interface for staff to monitor form submissions
+    
+## Real-Time Synchronization Flow
+### 1. Connection Setup
+- The application uses Ably's Realtime client for real-time communication
+- Connection is established through a custom hook `useAbly`
+- Authentication is handled via `/api/ably-token` endpoint
+
+### 2. Channel Management
+- Uses a dedicated channel named "patient-form" for patient data
+- Channel is created and managed through the `useAbly` hook
+- Connection state is monitored with `connected` and `disconnected` events
+
+### 3. Real-time Updates Flow
+#### Patient Side:
+1. **Form Updates**
+   - Every input change triggers a real-time update
+   - Data is published to the "patient-update" event
+   - Activity status is updated to "active" to the "activity-status" event
+
+2. **Activity Monitoring**
+   (useEffect)
+   - Activity status is checked every 30 seconds
+   - After 2 minutes of inactivity, status changes to "inactive"
+   - Status is published to "activity-status" event
+
+3. **Form Submission**
+    - On successful submission:
+      
+        - Validated data is published to "patient-submit" event
+        - Activity status changes to "submitted"
+        - Staff is notified in real-time
+          
+#### Staff Side:
+- Receives real-time updates through the same channel
+- Can monitor:
+  
+  - Live form updates as patients type
+  - Patient activity status
+  - Form submission notifications
+
