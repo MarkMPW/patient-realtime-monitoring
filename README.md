@@ -11,6 +11,7 @@ npm install
 npm run dev
 
 ```
+
 ## Tech Stacks
 * React 19
 * Next.js 15
@@ -18,6 +19,9 @@ npm run dev
 * TypeScript
 * Ably
 * Zod
+
+> ### ❗️NOTES❗️
+> ### Root page will render patient form, for staff go to /staff path
 
 ## Features
 - **Real-time Data Sync**: Staff can instantly view patient data while typing without needing to refresh the page.
