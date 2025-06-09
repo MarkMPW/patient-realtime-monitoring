@@ -11,13 +11,7 @@ export const useAbly = (channelName: string) => {
     });
 
     const patientChannel = realtimeClient.channels.get(channelName);
-
-    const connection = async () => {
-      await patientChannel.attach();
-      setChannel(patientChannel);
-    };
-
-    connection();
+    setChannel(patientChannel);
     
     realtimeClient.connection.on("connected", () => {
       console.log(`Connected to Ably channel: ${channelName}`);

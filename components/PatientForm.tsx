@@ -7,6 +7,14 @@ import formSchema from "@/lib/validatiopn";
 import z from "zod";
 import { useAbly } from "@/hooks/useAbly";
 
+interface ActivityStatusMessage {
+  status: 'active' | 'inactive' | 'submitted';
+}
+
+interface PatientSubmitMessage extends PatientFormDataType {
+  submittedAt: string;
+}
+
 const initialFormData: PatientFormDataType = {
   firstName: "",
   middleName: "",
@@ -42,9 +50,9 @@ const PatientForm = () => {
       
       // If no activity for more than 2 minutes, mark as inactive
       if (timeSinceLastActivity > 120000) {
-        channel.publish("activity-status", { status: "inactive" });
+        channel.publish("activity-status", { status: "inactive" } as ActivityStatusMessage);
       } else {
-        channel.publish("activity-status", { status: "active" });
+        channel.publish("activity-status", { status: "active" } as ActivityStatusMessage);
       }
     }, 30000);
 
@@ -81,7 +89,7 @@ const PatientForm = () => {
 
       if (channel) {
         channel.publish("patient-update", newData);
-        channel.publish("activity-status", { status: "active" });
+        channel.publish("activity-status", { status: "active" } as ActivityStatusMessage);
       }
 
       return newData;
@@ -91,22 +99,20 @@ const PatientForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitStatus('submitting');
-    setError({}); // Clear any previous errors
+    setError({});
 
     try {
       const validatedData = await formSchema.parseAsync(patientData);
-      console.log("Validation Passed:", validatedData);
       
       if (channel) {
         channel.publish("patient-submit", {
           ...validatedData,
           submittedAt: new Date().toISOString(),
-        });
-        channel.publish("activity-status", { status: "submitted" });
+        } as PatientSubmitMessage);
+        channel.publish("activity-status", { status: "submitted" } as ActivityStatusMessage);
         console.log("Published final form:", validatedData);
         setSubmitStatus('success');
         
-        // Reset form after 3 seconds
         setTimeout(() => {
           resetForm();
         }, 3000);
@@ -114,7 +120,7 @@ const PatientForm = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const zodError = error.flatten().fieldErrors;
-        setError(zodError as any);
+        setError(zodError as unknown as Record<string, string>);
         setSubmitStatus('error');
       }
     }
