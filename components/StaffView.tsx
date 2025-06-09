@@ -1,46 +1,46 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PatientFormDataType } from "@/interfaces/patientFormData";
 import { useAbly } from "@/hooks/useAbly";
+import { PatientFormDataType } from "@/interfaces/patientFormData";
+
+interface ActivityStatusMessage {
+  status: 'active' | 'inactive' | 'submitted';
+}
+
+interface PatientUpdateMessage extends PatientFormDataType {
+  data: string
+}
+
+interface PatientSubmitMessage extends PatientFormDataType {
+  submittedAt: string;
+  message: string;
+}
 
 const StaffView = () => {
   const [patientData, setPatientData] = useState<PatientFormDataType | null>(null);
+  const [activityStatus, setActivityStatus] = useState<ActivityStatusMessage['status']>('inactive');
+  const [notification, setNotification] = useState<PatientSubmitMessage | null>(null);
   const { channel, isConnected } = useAbly("patient-form");
-  const [activityStatus, setActivityStatus] = useState<'inactive' | 'active' | 'submitted'>('inactive');
-  const [notification, setNotification] = useState<{
-    type: 'success';
-    message: string;
-    patientName: string;
-  } | null>(null);
 
   useEffect(() => {
     if (!channel) return;
 
     // Subscribe to patient updates
-    channel.subscribe("patient-update", (message: any) => {
-      console.log("Received patient update:", message.data);
+    channel.subscribe("patient-update", (message: { data: PatientUpdateMessage }) => {
       setPatientData(message.data);
     });
 
     // Subscribe to form submissions
-    channel.subscribe("patient-submit", (message: any) => {
-      console.log("Received final form submission:", message.data);
+    channel.subscribe("patient-submit", (message: { data: PatientSubmitMessage }) => {
       setPatientData(message.data);
-      setNotification({
-        type: 'success',
-        message: `New patient form submitted at ${new Date(message.data.submittedAt).toLocaleTimeString()}`,
-        patientName: `${message.data.firstName} ${message.data.lastName}`
-      });
-
+      setNotification(message.data);
       // Clear notification after 5 seconds
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
+      setTimeout(() => setNotification(null), 5000);
     });
 
     // Subscribe to activity status updates
-    channel.subscribe("activity-status", (message: any) => {
+    channel.subscribe("activity-status", (message: { data: ActivityStatusMessage }) => {
       setActivityStatus(message.data.status);
     });
 
@@ -49,7 +49,7 @@ const StaffView = () => {
     };
   }, [channel]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: ActivityStatusMessage['status']) => {
     switch (status) {
       case 'active':
         return 'bg-green-500';
@@ -62,7 +62,7 @@ const StaffView = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: ActivityStatusMessage['status']) => {
     switch (status) {
       case 'active':
         return 'Patient is filling the form';
@@ -125,7 +125,7 @@ const StaffView = () => {
           {notification && (
             <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
               <div className="font-semibold">{notification.message}</div>
-              <div className="text-sm mt-1">Patient: {notification.patientName}</div>
+              <div className="text-sm mt-1">Patient: {notification.firstName} {notification.lastName}</div>
             </div>
           )}
 
