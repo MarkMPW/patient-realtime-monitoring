@@ -11,4 +11,25 @@ npm install
 npm run dev
 
 ```
+## Tech Stacks
+* React 19
+* Next.js 15
+* TailwindCss
+* TypeScript
+* Ably
+* Zod
 
+## Features
+- **Real-time Data Sync**: Staff can instantly view patient data while typing without needing to refresh the page.
+  
+- **Activity Status Tracking**: Visual indicators show whether a patient is currently active or inactive or already sunmited the form.
+  
+- **Resposive Design**: Fully optimized for all screen sizes from mobile phones to desktop displays.
+  
+- **Validation and Type Safety**: Built-in form validation and schema enforcement using Zod and TypeScript.
+
+## Setup Ably API Key
+Before connect to Ably you need to create Api key first [Learn more](https://ably.com/docs/auth)
+```
+ABLY_API_KEY=
+```
